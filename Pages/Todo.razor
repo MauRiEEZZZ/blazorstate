@@ -1,10 +1,14 @@
 ﻿@page "/todo"
+@using Fluxor
+@inject IState<TodoState> TodoState
+@inject IDispatcher Dispatcher
+@inherits Fluxor.Blazor.Web.Components.FluxorComponent
 
-<h3>Todo (@todos.Count(todo => !todo.IsDone))</h3>
+<h3>Todo (@TodoState.Value.Todos.Count(todo => !todo.IsDone))</h3>
 
 <form @onsubmit=AddTodo>
     <ul>
-        @foreach (var todo in todos)
+        @foreach (var todo in TodoState.Value.Todos)
         {
             <li>
                 <input type="checkbox" @bind="todo.IsDone" />
@@ -18,13 +22,14 @@
 
 
 @code {
-    private List<TodoItem> todos = new();
     private string? newTodo;
     private void AddTodo()
     {
         if (!string.IsNullOrWhiteSpace(newTodo))
         {
-            todos.Add(new TodoItem { Title = newTodo });
+            var action = new AddTodoItemAction(new TodoItem { Title = newTodo });
+            Dispatcher.Dispatch(action);
+
             newTodo = string.Empty;
         }
     }

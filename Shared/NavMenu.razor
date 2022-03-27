@@ -1,4 +1,8 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
+﻿@using Fluxor
+@inject IState<TodoState> TodoState
+@inherits Fluxor.Blazor.Web.Components.FluxorComponent
+
+<div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
         <a class="navbar-brand" href="">blazorstate</a>
         <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
@@ -26,7 +30,7 @@
         </div>
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="todo">
-                <span class="oi oi-list-rich" aria-hidden="true"></span> Todo
+                <span class="oi oi-list-rich" aria-hidden="true"></span> Todo (@TodoState.Value.Todos.Count(todo => !todo.IsDone))
             </NavLink>
         </div>
     </nav>
