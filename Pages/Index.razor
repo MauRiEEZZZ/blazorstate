@@ -7,3 +7,13 @@
 Welcome to your new app.
 
 <SurveyPrompt Title="How is Blazor working for you?" />
+<div>
+    <label for="checkboxId">Check the box</label>
+    <input type="checkbox" id="checkboxId" @bind="@Settings.AutoRefreshLists">
+</div>
+
+@code {
+    [CascadingParameter]
+    SettingsProvider.Settings Settings { get; set; } = null!;
+
+}
