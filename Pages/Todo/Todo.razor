@@ -1,0 +1,60 @@
+﻿@page "/todo"
+
+<h3>Todo items (@todos.Count(todo => !todo.IsDone))</h3>
+@if (todos.Any())
+{
+    <div style="height:10rem;overflow-y:scroll">
+        <Virtualize Items="@todos" Context="todo">
+            <li class="list-group-item pb-1">
+                <div class="d-flex gap-4">
+                    <div class="flex-column gap-2 align-items-center">
+                        <input id="doneCheckbox" type="checkbox" @bind="todo.IsDone"/>
+                        <label for="doneCheckbox">Is done</label>
+                    </div>
+                    <div class="flex-column gap-2 align-items-center">
+                        <label for="titleInput">Title:</label>
+                        <label id="titleInput">@todo.Title</label>
+                    </div>
+                    <div class="flex-column gap-2 align-items-center">
+                        <label for="titleInput">Id:</label>
+                        <label id="titleInput">@todo.Id</label>
+                    </div>
+                    
+                </div>
+            </li>
+        </Virtualize>
+    </div>
+}
+
+@if (!todos.Any())
+{
+    <label class="pb-3">please add a todo item below.</label>
+}
+
+<EditForm Model="_newTodo" OnSubmit="AddTodo">
+    <div class="d-flex flex-row gap-2 align-items-center">
+        <span class="oi oi-plus" type="submit" ></span>
+        <InputText @ref="_newTodoInputText" @bind-Value="_newTodo.Title" DisplayName="displayName" placeholder="Enter title for new todo..."></InputText>
+    </div>
+</EditForm>
+
+
+@code {
+    private List<TodoItem> todos = new();
+    private readonly TodoItem _newTodo = new();
+    private InputText _newTodoInputText = null!;
+    
+    private void AddTodo()
+    {
+        if (string.IsNullOrWhiteSpace(_newTodo.Title)) return;
+        todos.Add(new TodoItem { Title = _newTodo.Title }); //page responsible for saving/adding the item to the list? What if we need to hve sideaffects?
+        _newTodo.Title = string.Empty; //page responsible for reverting to initial state? This could be called a sideeffect of Add/save
+    }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+            _newTodoInputText.Element?.FocusAsync();
+        base.OnAfterRender(firstRender);
+    }
+}
