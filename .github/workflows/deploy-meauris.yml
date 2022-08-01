@@ -1,0 +1,76 @@
+name: Deploy to meauris Azure App Service
+
+on:
+  workflow_dispatch:
+
+defaults:
+  run:
+    shell: pwsh
+
+jobs:
+
+  calculate-version:
+    name: Calculate Version
+    runs-on: ubuntu-latest
+    outputs:
+      semVer: ${{ steps.gitversion.outputs.semVer }}
+      shortSha: ${{ steps.gitversion.outputs.shortSha }}
+    steps:
+
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - uses: gittools/actions/gitversion/setup@v0.9.13
+        name: Install GitVersion
+        with:
+          versionSpec: '5.x'
+
+      - uses: gittools/actions/gitversion/execute@v0.9.13
+        name: Determine Version
+        id: gitversion
+
+  build-and-deploy:
+    environment: meauris
+    permissions:
+      id-token: write
+      contents: read
+    runs-on: ubuntu-latest
+    needs: calculate-version
+    env:
+      CALCULATEDVERSION: ${{ needs.calculate-version.outputs.semVer }}.Sha.${{ needs.calculate-version.outputs.shortSha }}
+
+
+    steps:
+
+    # checkout the repo
+    - name: 'Checkout Github Action'
+      uses: actions/checkout@v2
+
+    - name: 'Login Azure'
+      uses: azure/login@v1
+      with:
+        client-id: ${{ secrets.AZURE_CLIENT_ID }}
+        tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+        subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+    - name: Set up .NET Core
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: '6.0.x'
+
+    - name: Dotnet Restore
+      run: dotnet restore .
+
+    - name: Dotnet Build
+      run: dotnet build --configuration Release .
+
+    - name: Dotnet Publish
+      run: dotnet publish . -c Release -o ${{env.DOTNET_ROOT}}/portal
+
+    - name: Azure webapp deploy
+      uses: azure/webapps-deploy@v2
+      with:
+        app-name: meauris
+        package: ${{env.DOTNET_ROOT}}/portal
